@@ -22,6 +22,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -50,6 +51,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final int CORRECT_ANSWER_DELAY_MILLIS = 1000;
     private static final String REMAINING_SONGS_KEY = "remaining_songs";
+    private static final String TAG = QuizActivity.class.getSimpleName();
     private int[] mButtonIDs = {R.id.buttonA, R.id.buttonB, R.id.buttonC, R.id.buttonD};
     private ArrayList<Integer> mRemainingSampleIDs;
     private ArrayList<Integer> mQuestionSampleIDs;
@@ -119,6 +121,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
                 mExoPlayer = ExoPlayerFactory.newSimpleInstance(this, trackSelector, loadControl);
                 mPlayerView.setPlayer(mExoPlayer);
                 // Prepare the MediaSource.
+                mExoPlayer.addListener(this);
                 String userAgent = Util.getUserAgent(this, "ClassicalMusicQuiz");
                 MediaSource mediaSource = new ExtractorMediaSource(mediaUri, new DefaultDataSourceFactory(
                         this, userAgent), new DefaultExtractorsFactory(), null, null);
@@ -137,50 +140,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         mExoPlayer = null;
     }
 
-    /**
-     * The OnClick method for all of the answer buttons. The method uses the index of the button
-     * in button array to to get the ID of the sample from the array of question IDs. It also
-     * toggles the UI to show the correct answer.
-     *
-     * @@ -141,45 +190,46 @@
-     * }
-     * <p>
-     * // Get the ID of the sample that the user selected.
-     * int userAnswerSampleID = mQuestionSampleIDs.get(userAnswerIndex);
-     * <p>
-     * // If the user is correct, increase there score and update high score.
-     * if (QuizUtils.userCorrect(mAnswerSampleID, userAnswerSampleID)) {
-     * mCurrentScore++;
-     * QuizUtils.setCurrentScore(this, mCurrentScore);
-     * if (mCurrentScore > mHighScore) {
-     * mHighScore = mCurrentScore;
-     * QuizUtils.setHighScore(this, mHighScore);
-     * }
-     * }
-     * <p>
-     * // Remove the answer sample from the list of all samples, so it doesn't get asked again.
-     * mRemainingSampleIDs.remove(Integer.valueOf(mAnswerSampleID));
-     * <p>
-     * // Wait some time so the user can see the correct answer, then go to the next question.
-     * final Handler handler = new Handler();
-     * handler.postDelayed(new Runnable() {
-     * @Override public void run() {
-     * <p>
-     * +                mExoPlayer.stop();
-     * Intent nextQuestionIntent = new Intent(QuizActivity.this, QuizActivity.class);
-     * nextQuestionIntent.putExtra(REMAINING_SONGS_KEY, mRemainingSampleIDs);
-     * finish();
-     * startActivity(nextQuestionIntent);
-     * }
-     * }, CORRECT_ANSWER_DELAY_MILLIS);
-     * <p>
-     * }
-     * <p>
-     * /**
-     * <p>
-     * Disables the buttons and changes the background colors and player art to
-     * show the correct answer.
-     */
+
     private void showCorrectAnswer() {
         mPlayerView.setDefaultArtwork(Sample.getComposerArtBySampleID(this, mAnswerSampleID));
         for (int i = 0; i < mQuestionSampleIDs.size(); i++) {
@@ -201,48 +161,43 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+    }
 
-                            /**
-                             * Release the player when the activity is destroyed.
-                             */
-                            @Override
-                            protected void onDestroy() {
-                                super.onDestroy();
-                                releasePlayer();
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+    }
+
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+    }
+
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        if ((playbackState == ExoPlayer.STATE_READY) && playWhenReady) {
+            Log.d(TAG, "onPlayerStateChanged: PLAYING");
+        } else if ((playbackState == ExoPlayer.STATE_READY)) {
+            Log.d(TAG, "onPlayerStateChanged: PAUSED");
+        }
+    }
+
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+    }
+
+    @Override
+    public void onPositionDiscontinuity() {
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releasePlayer();
                             }
 
     @Override
     public void onClick(View v) {
 
     }
-
-    @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
-
     }
-
-    @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-    }
-
-    @Override
-    public void onLoadingChanged(boolean isLoading) {
-
-    }
-
-    @Override
-    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-
-    }
-
-    @Override
-    public void onPlayerError(ExoPlaybackException error) {
-
-    }
-
-    @Override
-    public void onPositionDiscontinuity() {
-
-    }
-}
